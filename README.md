@@ -2,12 +2,12 @@
 
 A fullstack Kanban board with real-time collaboration, rich text cards, and end-to-end encryption.
 
-![BoardFlow screenshot](docs/Screenshot%202026-05-01%20at%207.59.18%20PM.png)
+![BoardFlow screenshot](docs/screenshot.png)
 
 ## Quick Start
 
 ```bash
-git clone <repo-url>
+git clone git@github.com:charles-rivera/BoardFlow.git
 cd cocompetence
 docker compose up
 ```
