@@ -4,7 +4,7 @@ import path from 'path'
 
 export async function setup(): Promise<void> {
   const testPool = new Pool({
-    connectionString: 'postgresql://postgres:postgres@db_test:5432/kanban_test',
+    connectionString: process.env.DATABASE_URL ?? 'postgresql://postgres:postgres@db_test:5432/kanban_test',
   })
   const sql = fs.readFileSync(
     path.join(__dirname, '..', 'migrations', '001_initial.sql'),
