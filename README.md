@@ -2,6 +2,8 @@
 
 A fullstack Kanban board with real-time collaboration, rich text cards, and end-to-end encryption.
 
+![BoardFlow screenshot](docs/Screenshot%202026-05-01%20at%207.59.18%20PM.png)
+
 ## Quick Start
 
 ```bash
