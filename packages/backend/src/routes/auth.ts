@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import { pool } from '../db'
-import { requireAuth, AuthenticatedRequest } from '../middleware/auth'
+import { getUserIdFromRequest } from '../middleware/auth'
 
 export const authRouter = Router()
 
@@ -63,12 +63,15 @@ authRouter.post('/logout', (_req: Request, res: Response): void => {
   res.json({ ok: true })
 })
 
-authRouter.get('/me', requireAuth, async (req: Request, res: Response): Promise<void> => {
-  const { userId } = req as AuthenticatedRequest
+authRouter.get('/me', async (req: Request, res: Response): Promise<void> => {
+  const userId = getUserIdFromRequest(req)
+  if (!userId) {
+    res.json({ user: null }); return
+  }
   const { rows } = await pool.query<{ id: string; email: string }>(
     'SELECT id, email FROM users WHERE id = $1',
     [userId]
   )
-  if (!rows[0]) { res.status(401).json({ error: 'Unauthorized' }); return }
+  if (!rows[0]) { res.json({ user: null }); return }
   res.json({ user: rows[0] })
 })

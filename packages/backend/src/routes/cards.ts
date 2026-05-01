@@ -1,8 +1,9 @@
 import { Router, Request, Response } from 'express'
 import { pool } from '../db'
-import { requireAuth, AuthenticatedRequest } from '../middleware/auth'
+import { requireAuth, getAuthenticatedUserId } from '../middleware/auth'
 import { publishBoardChanged } from '../realtime'
 import { getCardById } from '../board'
+import { encryptCardContent, decryptCardRecord } from '../cardCrypto'
 
 export const cardsRouter = Router()
 cardsRouter.use(requireAuth)
@@ -10,9 +11,10 @@ cardsRouter.use(requireAuth)
 const RENORM_GAP = 0.001
 
 cardsRouter.get('/', async (_req: Request, res: Response): Promise<void> => {
-  const { rows: cards } = await pool.query(
-    'SELECT id, lane_id, title, description, position, created_at, updated_at FROM cards WHERE deleted_at IS NULL ORDER BY position ASC'
+  const { rows: encryptedCards } = await pool.query(
+    'SELECT id, lane_id, user_id, title, description, position, created_at, updated_at FROM cards WHERE deleted_at IS NULL ORDER BY position ASC'
   )
+  const cards = encryptedCards.map(decryptCardRecord)
   res.json({ cards })
 })
 
@@ -25,7 +27,7 @@ cardsRouter.get('/:id', async (req: Request, res: Response): Promise<void> => {
 })
 
 cardsRouter.post('/', async (req: Request, res: Response): Promise<void> => {
-  const { userId } = req as AuthenticatedRequest
+  const userId = getAuthenticatedUserId(req)
   const { lane_id, title, description } = req.body
   if (!title || typeof title !== 'string' || !title.trim()) {
     res.status(400).json({ error: 'Title is required' }); return
@@ -40,10 +42,11 @@ cardsRouter.post('/', async (req: Request, res: Response): Promise<void> => {
     'SELECT MAX(position) AS max FROM cards WHERE lane_id = $1 AND deleted_at IS NULL',
     [lane_id]
   )
-  const { rows: [card] } = await pool.query(
-    'INSERT INTO cards (lane_id, user_id, title, description, position) VALUES ($1, $2, $3, $4, $5) RETURNING id, lane_id, title, description, position, created_at, updated_at',
-    [lane_id, userId, title.trim(), (description ?? '').toString().trim(), (max ?? 0) + 1]
+  const { rows: [inserted] } = await pool.query(
+    'INSERT INTO cards (lane_id, user_id, title, description, position) VALUES ($1, $2, $3, $4, $5) RETURNING id',
+    [lane_id, userId, encryptCardContent(title.trim()), encryptCardContent((description ?? '').toString().trim()), (max ?? 0) + 1]
   )
+  const card = await getCardById(pool, inserted.id)
   publishBoardChanged()
   res.status(201).json({ card })
 })
@@ -57,9 +60,11 @@ cardsRouter.patch('/:id', async (req: Request, res: Response): Promise<void> => 
     if (typeof title !== 'string' || !title.trim()) {
       res.status(400).json({ error: 'Title cannot be empty' }); return
     }
-    setClauses.push(`title = $${idx++}`); values.push(title.trim())
+    setClauses.push(`title = $${idx++}`); values.push(encryptCardContent(title.trim()))
   }
-  if (description !== undefined) { setClauses.push(`description = $${idx++}`); values.push(String(description).trim()) }
+  if (description !== undefined) {
+    setClauses.push(`description = $${idx++}`); values.push(encryptCardContent(String(description).trim()))
+  }
   if (lane_id !== undefined) { setClauses.push(`lane_id = $${idx++}`); values.push(lane_id) }
   if (position !== undefined) {
     if (typeof position !== 'number' || !isFinite(position)) {
@@ -85,7 +90,7 @@ cardsRouter.patch('/:id', async (req: Request, res: Response): Promise<void> => 
       }
     }
     const { rows, rowCount } = await client.query(
-      `UPDATE cards SET ${setClauses.join(', ')} WHERE id = $${idx} AND deleted_at IS NULL RETURNING id, lane_id, title, description, position, created_at, updated_at`,
+      `UPDATE cards SET ${setClauses.join(', ')} WHERE id = $${idx} AND deleted_at IS NULL RETURNING id, lane_id, user_id, title, description, position, created_at, updated_at`,
       values
     )
     if (!rowCount) {

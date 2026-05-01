@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import request from 'supertest'
 import { app } from '../index'
+import { pool } from '../db'
 import { clearDb, createUser, loginUser } from './helpers'
 
 describe('Cards', () => {
@@ -22,14 +23,23 @@ describe('Cards', () => {
   })
 
   describe('POST /api/cards', () => {
-    it('creates a card with position 1', async () => {
+    it('creates a card with encrypted database content and position 1', async () => {
       const res = await request(app)
-        .post('/api/cards').set('Cookie', cookie).send({ lane_id: laneId, title: 'My Card' })
+        .post('/api/cards').set('Cookie', cookie).send({ lane_id: laneId, title: 'My Card', description: 'Secret body' })
       expect(res.status).toBe(201)
       expect(res.body.card.title).toBe('My Card')
       expect(res.body.card.position).toBe(1)
       expect(res.body.card.lane_id).toBe(laneId)
-      expect(res.body.card.description).toBe('')
+      expect(res.body.card.description).toBe('Secret body')
+
+      const { rows } = await pool.query<{ title: string; description: string }>(
+        'SELECT title, description FROM cards WHERE id = $1',
+        [res.body.card.id]
+      )
+      expect(rows[0].title).not.toBe('My Card')
+      expect(rows[0].description).not.toBe('Secret body')
+      expect(rows[0].title).toMatch(/^v1\./)
+      expect(rows[0].description).toMatch(/^v1\./)
     })
 
     it('assigns sequential positions within a lane', async () => {

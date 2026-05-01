@@ -1,8 +1,10 @@
 import { Pool, PoolClient } from 'pg'
+import { decryptCardRecord } from './cardCrypto'
 
 export interface CardRecord {
   id: string
   lane_id: string
+  user_id: string
   title: string
   description: string
   position: number
@@ -12,6 +14,7 @@ export interface CardRecord {
 
 export interface LaneRecord {
   id: string
+  user_id: string
   title: string
   position: number
   created_at: string
@@ -21,11 +24,12 @@ type DbClient = Pool | PoolClient
 
 export async function getBoard(client: DbClient): Promise<{ lanes: Array<LaneRecord & { cards: CardRecord[] }> }> {
   const { rows: lanes } = await client.query<LaneRecord>(
-    'SELECT id, title, position, created_at FROM lanes WHERE deleted_at IS NULL ORDER BY position ASC'
+    'SELECT id, user_id, title, position, created_at FROM lanes WHERE deleted_at IS NULL ORDER BY position ASC'
   )
-  const { rows: cards } = await client.query<CardRecord>(
-    'SELECT id, lane_id, title, description, position, created_at, updated_at FROM cards WHERE deleted_at IS NULL ORDER BY position ASC'
+  const { rows: encryptedCards } = await client.query<CardRecord>(
+    'SELECT id, lane_id, user_id, title, description, position, created_at, updated_at FROM cards WHERE deleted_at IS NULL ORDER BY position ASC'
   )
+  const cards = encryptedCards.map(decryptCardRecord)
 
   const cardsByLane = new Map<string, CardRecord[]>()
   for (const card of cards) {
@@ -44,7 +48,7 @@ export async function getBoard(client: DbClient): Promise<{ lanes: Array<LaneRec
 
 export async function getLaneById(
   client: DbClient,
-  laneId: string
+  laneId: string,
 ): Promise<(LaneRecord & { cards: CardRecord[] }) | null> {
   const board = await getBoard(client)
   return board.lanes.find((lane) => lane.id === laneId) ?? null
@@ -52,9 +56,8 @@ export async function getLaneById(
 
 export async function getCardById(client: DbClient, cardId: string): Promise<CardRecord | null> {
   const { rows } = await client.query<CardRecord>(
-    'SELECT id, lane_id, title, description, position, created_at, updated_at FROM cards WHERE id = $1 AND deleted_at IS NULL',
+    'SELECT id, lane_id, user_id, title, description, position, created_at, updated_at FROM cards WHERE id = $1 AND deleted_at IS NULL',
     [cardId]
   )
-  return rows[0] ?? null
+  return rows[0] ? decryptCardRecord(rows[0]) : null
 }
-

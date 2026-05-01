@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express'
 import { pool } from '../db'
-import { requireAuth, AuthenticatedRequest } from '../middleware/auth'
+import { requireAuth, getAuthenticatedUserId } from '../middleware/auth'
 import { publishBoardChanged } from '../realtime'
 import { getBoard, getLaneById } from '../board'
 
@@ -78,7 +78,7 @@ async function updateLaneById(id: string, body: { title?: unknown; position?: un
   }
 }
 
-lanesRouter.get('/', async (req: Request, res: Response): Promise<void> => {
+lanesRouter.get('/', async (_req: Request, res: Response): Promise<void> => {
   res.json(await getBoard(pool))
 })
 
@@ -91,7 +91,7 @@ lanesRouter.get('/:id', async (req: Request, res: Response): Promise<void> => {
 })
 
 lanesRouter.post('/', async (req: Request, res: Response): Promise<void> => {
-  const { userId } = req as AuthenticatedRequest
+  const userId = getAuthenticatedUserId(req)
   const { title } = req.body
   if (!title || typeof title !== 'string' || !title.trim()) {
     res.status(400).json({ error: 'Title is required' }); return
@@ -100,7 +100,7 @@ lanesRouter.post('/', async (req: Request, res: Response): Promise<void> => {
     'SELECT MAX(position) AS max FROM lanes WHERE deleted_at IS NULL'
   )
   const { rows: [lane] } = await pool.query(
-    'INSERT INTO lanes (user_id, title, position) VALUES ($1, $2, $3) RETURNING id, title, position, created_at',
+    'INSERT INTO lanes (user_id, title, position) VALUES ($1, $2, $3) RETURNING id, user_id, title, position, created_at',
     [userId, title.trim(), (max ?? 0) + 1]
   )
   publishBoardChanged()

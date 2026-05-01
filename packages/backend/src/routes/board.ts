@@ -9,4 +9,3 @@ boardRouter.use(requireAuth)
 boardRouter.get('/', async (_req: Request, res: Response): Promise<void> => {
   res.json(await getBoard(pool))
 })
-

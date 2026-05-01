@@ -122,16 +122,18 @@ describe('Auth', () => {
       expect(res.body.user.email).toBe('alice@example.com')
     })
 
-    it('returns 401 without cookie', async () => {
+    it('returns null without cookie', async () => {
       const res = await request(app).get('/api/auth/me')
-      expect(res.status).toBe(401)
+      expect(res.status).toBe(200)
+      expect(res.body.user).toBeNull()
     })
 
-    it('returns 401 with tampered token', async () => {
+    it('returns null with tampered token', async () => {
       const res = await request(app)
         .get('/api/auth/me')
         .set('Cookie', 'token=this.is.not.valid')
-      expect(res.status).toBe(401)
+      expect(res.status).toBe(200)
+      expect(res.body.user).toBeNull()
     })
   })
 })
