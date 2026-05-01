@@ -12,7 +12,7 @@ export default function CardModal({ card, open, onClose }: CardModalProps) {
   const updateCard = useUpdateCard()
   const deleteCard = useDeleteCard()
 
-  useEffect(() => { setTitle(card.title); setDescription(card.description) }, [card.id])
+  useEffect(() => { setTitle(card.title); setDescription(card.description) }, [card.id, card.title, card.description])
 
   useEffect(() => {
     if (!open) return undefined
