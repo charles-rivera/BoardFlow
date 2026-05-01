@@ -27,7 +27,7 @@ describe('Card', () => {
     await userEvent.click(screen.getByText('Test Card'))
     expect(screen.getByRole('dialog')).toBeInTheDocument()
     expect(screen.getByDisplayValue('Test Card')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Some description')).toBeInTheDocument()
+    expect(screen.getByRole('textbox', { name: 'Card description' })).toHaveTextContent('Some description')
   })
 
   it('closes modal on backdrop click', async () => {

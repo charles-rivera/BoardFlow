@@ -3,8 +3,13 @@ import { useDraggable, useDroppable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 import type { Card as CardType } from '@kanban/shared'
 import CardModal from './CardModal'
+import { markdownToPlainText } from './RichTextEditor'
 
 interface CardProps { card: CardType }
+
+function descriptionPreview(description: string) {
+  return markdownToPlainText(description)
+}
 
 export function CardSurface({
   card,
@@ -25,8 +30,8 @@ export function CardSurface({
       } ${isOver && !isDragging ? 'ring-2 ring-blue-200' : ''}`}
     >
       <p className="text-sm font-medium text-gray-800 leading-snug">{card.title}</p>
-      {card.description && (
-        <p className="text-xs text-gray-400 mt-1 line-clamp-2">{card.description}</p>
+      {descriptionPreview(card.description) && (
+        <p className="text-xs text-gray-400 mt-1 line-clamp-2">{descriptionPreview(card.description)}</p>
       )}
     </div>
   )

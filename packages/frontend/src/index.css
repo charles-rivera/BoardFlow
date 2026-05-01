@@ -1,3 +1,26 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.toastui-editor-defaultUI {
+  border: 0;
+}
+
+.toastui-editor-defaultUI-toolbar {
+  border-bottom-color: #e5e7eb;
+}
+
+.toastui-editor-contents {
+  font-family: inherit;
+  font-size: 0.95rem;
+  color: #111827;
+}
+
+.toastui-editor-contents img {
+  border-radius: 0.5rem;
+}
+
+.toastui-editor-md-tab-container,
+.toastui-editor-mode-switch {
+  display: none !important;
+}
