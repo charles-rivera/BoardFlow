@@ -1,10 +1,11 @@
 import { DndContext, PointerSensor, useSensor, useSensors, DragEndEvent, DragOverEvent, DragStartEvent, DragCancelEvent, DragOverlay } from '@dnd-kit/core'
 import type { Card, Lane } from '@kanban/shared'
 import { useQueryClient } from '@tanstack/react-query'
-import { useRef, useState } from 'react'
+import { useRef, useState, type CSSProperties } from 'react'
 import { useLanes } from '../hooks/useLanes'
 import { useMoveCard } from '../hooks/useCards'
 import { useRealtimeBoard } from '../hooks/useRealtimeBoard'
+import { useUiSettings } from '../context/UiSettingsContext'
 import { getCardInsertPosition, moveCardInLanes, type MoveCardInput } from '../lib/cardMove'
 import BoardHeader from './BoardHeader'
 import LaneList from './LaneList'
@@ -14,6 +15,7 @@ import { CardSurface } from './Card'
 interface BoardPageProps { user: { id: string; email: string } }
 
 export default function BoardPage({ user }: BoardPageProps) {
+  const { settings } = useUiSettings()
   const qc = useQueryClient()
   const { data: lanes, isLoading } = useLanes()
   useRealtimeBoard(Boolean(user.id))
@@ -169,10 +171,22 @@ export default function BoardPage({ user }: BoardPageProps) {
     restoreSnapshot()
   }
 
-  if (isLoading) return <div className="flex items-center justify-center h-screen text-gray-400">Loading board…</div>
+  const boardStyle = {
+    '--board-gap': settings.boardDensity === 'compact' ? '0.75rem' : settings.boardDensity === 'airy' ? '1.25rem' : '1rem',
+    '--board-padding': settings.boardDensity === 'compact' ? '0.75rem' : settings.boardDensity === 'airy' ? '1.5rem' : '1rem',
+    '--lane-padding': settings.boardDensity === 'compact' ? '0.625rem' : settings.boardDensity === 'airy' ? '1rem' : '0.75rem',
+    '--lane-width': settings.cardSize === 'compact' ? '15rem' : settings.cardSize === 'large' ? '18rem' : '16rem',
+    '--card-padding': settings.cardSize === 'compact' ? '0.625rem' : settings.cardSize === 'large' ? '1rem' : '0.75rem',
+    '--card-title-size': settings.cardSize === 'compact' ? '0.8125rem' : settings.cardSize === 'large' ? '0.975rem' : '0.875rem',
+    '--card-description-size': settings.cardSize === 'compact' ? '0.6875rem' : settings.cardSize === 'large' ? '0.8125rem' : '0.75rem',
+    '--lane-title-size': settings.cardSize === 'compact' ? '0.8125rem' : settings.cardSize === 'large' ? '0.9375rem' : '0.875rem',
+    '--lane-count-size': settings.cardSize === 'compact' ? '0.6875rem' : settings.cardSize === 'large' ? '0.8125rem' : '0.75rem',
+  } as CSSProperties
+
+  if (isLoading) return <div className="flex h-screen items-center justify-center text-[var(--color-text-muted)]">Loading board…</div>
 
   return (
-    <div className="flex flex-col h-screen bg-slate-100">
+    <div style={boardStyle} className="flex h-screen flex-col bg-[var(--color-app-bg)] text-[var(--color-text)] transition-colors duration-300">
       <BoardHeader user={user} />
       <DndContext
         sensors={sensors}
@@ -181,15 +195,15 @@ export default function BoardPage({ user }: BoardPageProps) {
         onDragEnd={handleDragEnd}
         onDragCancel={handleDragCancel}
       >
-        <div className="flex-1 overflow-x-auto p-4">
-          <div className="flex gap-4 h-full items-start">
+        <div className="flex-1 overflow-x-auto p-[var(--board-padding)]">
+          <div className="flex h-full items-start gap-[var(--board-gap)]">
             <LaneList lanes={lanes ?? []} />
             <AddLaneButton />
           </div>
         </div>
         <DragOverlay dropAnimation={null}>
           {activeDragCard ? (
-            <div className="w-[232px] cursor-grabbing">
+            <div className="w-[var(--lane-width)] cursor-grabbing">
               <CardSurface card={activeDragCard} isDragging />
             </div>
           ) : null}

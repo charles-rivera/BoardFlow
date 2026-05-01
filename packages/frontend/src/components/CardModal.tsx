@@ -26,25 +26,25 @@ export default function CardModal({ card, open, onClose }: CardModalProps) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
     >
       <div
-        className="flex max-h-[85vh] w-full max-w-2xl flex-col gap-4 rounded-2xl bg-white p-6 shadow-2xl"
+        className="flex max-h-[85vh] w-full max-w-2xl flex-col gap-4 rounded-3xl border border-[var(--color-border)] bg-[var(--color-panel-bg)] p-6 text-[var(--color-text)] shadow-2xl"
         onClick={e => e.stopPropagation()}
       >
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">Edit Card</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={18} /></button>
+          <button onClick={onClose} className="text-[var(--color-text-subtle)] transition-colors hover:text-[var(--color-text)]"><X size={18} /></button>
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">Title</label>
           <input
             value={title}
             onChange={e => setTitle(e.target.value)}
-            className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="w-full rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 py-2 text-[var(--color-text)] focus:outline-none focus:ring-2 focus:ring-blue-400"
           />
         </div>
         <div className="flex-1 overflow-y-auto">
@@ -60,7 +60,7 @@ export default function CardModal({ card, open, onClose }: CardModalProps) {
           </button>
           <button
             onClick={() => { deleteCard.mutate(card.id); onClose() }}
-            className="p-2 text-red-500 border border-red-200 rounded-lg hover:bg-red-50"
+            className="rounded-lg border border-red-200 p-2 text-red-500 transition-colors hover:bg-red-50"
             aria-label="Delete card"
           >
             <Trash2 size={16} />

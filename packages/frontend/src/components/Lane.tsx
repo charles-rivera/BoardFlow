@@ -19,8 +19,8 @@ export default function Lane({ lane }: LaneProps) {
 
   return (
     <div
-      className={`flex flex-col w-64 shrink-0 rounded-xl border bg-gray-50 p-3 shadow-sm transition-colors ${
-        isOver ? 'border-blue-300 bg-blue-50' : 'border-gray-200'
+      className={`flex w-[var(--lane-width)] shrink-0 flex-col rounded-2xl border bg-[var(--color-lane-bg)] p-[var(--lane-padding)] shadow-sm transition-colors ${
+        isOver ? 'border-[var(--color-accent)] bg-[var(--color-accent-soft)]' : 'border-[var(--color-border)]'
       }`}
     >
       <LaneHeader

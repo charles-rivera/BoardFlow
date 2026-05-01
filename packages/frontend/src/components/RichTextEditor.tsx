@@ -51,13 +51,13 @@ export default function RichTextEditor({ value, onChange, ariaLabel = 'Descripti
         aria-label={ariaLabel}
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="min-h-40 w-full resize-none rounded-lg border border-gray-200 px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+        className="min-h-40 w-full resize-none rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 py-3 text-sm text-[var(--color-text)] focus:outline-none focus:ring-2 focus:ring-blue-400"
       />
     )
   }
 
   return (
-    <div className="rounded-lg border border-gray-200 overflow-hidden focus-within:ring-2 focus-within:ring-blue-400">
+    <div className="overflow-hidden rounded-lg border border-[var(--color-border-strong)] focus-within:ring-2 focus-within:ring-blue-400">
       <div className="sr-only">{ariaLabel}</div>
       <Editor
         ref={editorRef}

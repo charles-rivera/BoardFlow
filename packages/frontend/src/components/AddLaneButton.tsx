@@ -17,23 +17,23 @@ export default function AddLaneButton() {
     return (
       <button
         onClick={() => setAdding(true)}
-        className="shrink-0 w-64 h-12 flex items-center justify-center rounded-xl border-2 border-dashed border-gray-300 text-gray-400 hover:border-blue-400 hover:text-blue-500 transition-colors"
+        className="flex h-12 w-[var(--lane-width)] shrink-0 items-center justify-center rounded-2xl border-2 border-dashed border-[var(--color-border-strong)] text-[var(--color-text-subtle)] transition-colors hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
       >
         + Add lane
       </button>
     )
   }
   return (
-    <div className="shrink-0 w-64 bg-gray-100 rounded-xl p-3">
+    <div className="w-[var(--lane-width)] shrink-0 rounded-2xl bg-[var(--color-lane-bg)] p-[var(--lane-padding)] shadow-sm">
       <input
         autoFocus value={title} onChange={e => setTitle(e.target.value)}
         onKeyDown={e => { if (e.key === 'Enter') submit(); if (e.key === 'Escape') { setAdding(false); setTitle('') } }}
         placeholder="Lane title…"
-        className="w-full border rounded-lg px-2 py-1 text-sm mb-2"
+        className="mb-2 w-full rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-2 py-2 text-sm text-[var(--color-text)]"
       />
       <div className="flex gap-1">
-        <button onClick={submit} className="flex-1 bg-blue-600 text-white text-sm rounded-lg py-1">Add</button>
-        <button onClick={() => { setAdding(false); setTitle('') }} className="px-2 text-sm text-gray-400">✕</button>
+        <button onClick={submit} className="flex-1 rounded-lg bg-blue-600 py-2 text-sm text-white">Add</button>
+        <button onClick={() => { setAdding(false); setTitle('') }} className="px-2 text-sm text-[var(--color-text-subtle)]">✕</button>
       </div>
     </div>
   )

@@ -2,22 +2,94 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  color-scheme: light;
+  --color-app-bg: #eef2f7;
+  --color-header-bg: rgba(255, 255, 255, 0.88);
+  --color-panel-bg: rgba(255, 255, 255, 0.96);
+  --color-surface: #ffffff;
+  --color-surface-muted: #eef2f6;
+  --color-surface-hover: #e2e8f0;
+  --color-lane-bg: rgba(255, 255, 255, 0.72);
+  --color-card-bg: rgba(255, 255, 255, 0.96);
+  --color-border: rgba(148, 163, 184, 0.28);
+  --color-border-strong: rgba(148, 163, 184, 0.48);
+  --color-text: #0f172a;
+  --color-text-muted: #334155;
+  --color-text-subtle: #64748b;
+  --color-accent: #ea580c;
+  --color-accent-soft: rgba(234, 88, 12, 0.14);
+}
+
+html[data-theme='dark'] {
+  color-scheme: dark;
+  --color-app-bg: #16181c;
+  --color-header-bg: rgba(28, 31, 36, 0.9);
+  --color-panel-bg: rgba(34, 38, 44, 0.96);
+  --color-surface: #262a30;
+  --color-surface-muted: #2d3239;
+  --color-surface-hover: #363c45;
+  --color-lane-bg: rgba(32, 36, 42, 0.84);
+  --color-card-bg: rgba(38, 42, 48, 0.98);
+  --color-border: rgba(255, 255, 255, 0.1);
+  --color-border-strong: rgba(255, 255, 255, 0.18);
+  --color-text: #eceff3;
+  --color-text-muted: #d4d9e0;
+  --color-text-subtle: #a3acb8;
+  --color-accent: #fb923c;
+  --color-accent-soft: rgba(251, 146, 60, 0.2);
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  background: var(--color-app-bg);
+  color: var(--color-text);
+}
+
 .toastui-editor-defaultUI {
   border: 0;
+  background: var(--color-surface);
 }
 
 .toastui-editor-defaultUI-toolbar {
-  border-bottom-color: #e5e7eb;
+  border-bottom-color: var(--color-border);
+  background: var(--color-surface);
 }
 
 .toastui-editor-contents {
   font-family: inherit;
   font-size: 0.95rem;
-  color: #111827;
+  color: var(--color-text);
 }
 
 .toastui-editor-contents img {
   border-radius: 0.5rem;
+}
+
+.toastui-editor-main,
+.toastui-editor-md-container,
+.toastui-editor-ww-container,
+.toastui-editor-ww-container .ProseMirror,
+.toastui-editor-md-container .toastui-editor-contents {
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.toastui-editor-defaultUI .toastui-editor-toolbar-icons {
+  filter: none;
+}
+
+html[data-theme='dark'] .toastui-editor-defaultUI .toastui-editor-toolbar-icons {
+  filter: invert(0.9);
+}
+
+.toastui-editor-defaultUI-toolbar button {
+  color: var(--color-text-muted);
 }
 
 .toastui-editor-md-tab-container,
