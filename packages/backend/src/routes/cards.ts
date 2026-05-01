@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express'
 import { pool } from '../db'
 import { requireAuth, AuthenticatedRequest } from '../middleware/auth'
+import { publishBoardChanged } from '../realtime'
 
 export const cardsRouter = Router()
 cardsRouter.use(requireAuth)
@@ -15,8 +16,8 @@ cardsRouter.post('/', async (req: Request, res: Response): Promise<void> => {
   }
   if (!lane_id) { res.status(400).json({ error: 'lane_id is required' }); return }
   const { rowCount: laneExists } = await pool.query(
-    'SELECT id FROM lanes WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL',
-    [lane_id, userId]
+    'SELECT id FROM lanes WHERE id = $1 AND deleted_at IS NULL',
+    [lane_id]
   )
   if (!laneExists) { res.status(404).json({ error: 'Lane not found' }); return }
   const { rows: [{ max }] } = await pool.query<{ max: number | null }>(
@@ -27,11 +28,11 @@ cardsRouter.post('/', async (req: Request, res: Response): Promise<void> => {
     'INSERT INTO cards (lane_id, user_id, title, description, position) VALUES ($1, $2, $3, $4, $5) RETURNING id, lane_id, title, description, position, created_at, updated_at',
     [lane_id, userId, title.trim(), (description ?? '').toString().trim(), (max ?? 0) + 1]
   )
+  publishBoardChanged()
   res.status(201).json({ card })
 })
 
 cardsRouter.patch('/:id', async (req: Request, res: Response): Promise<void> => {
-  const { userId } = req as AuthenticatedRequest
   const { title, description, lane_id, position } = req.body
   const setClauses = ['updated_at = NOW()']
   const values: unknown[] = []
@@ -50,14 +51,14 @@ cardsRouter.patch('/:id', async (req: Request, res: Response): Promise<void> => 
     }
     setClauses.push(`position = $${idx++}`); values.push(position)
   }
-  values.push(req.params.id, userId)
+  values.push(req.params.id)
   const client = await pool.connect()
   try {
     await client.query('BEGIN')
     if (lane_id !== undefined) {
       const { rowCount } = await client.query(
-        'SELECT id FROM lanes WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL',
-        [lane_id, userId]
+        'SELECT id FROM lanes WHERE id = $1 AND deleted_at IS NULL',
+        [lane_id]
       )
       if (!rowCount) {
         await client.query('ROLLBACK')
@@ -65,7 +66,7 @@ cardsRouter.patch('/:id', async (req: Request, res: Response): Promise<void> => 
       }
     }
     const { rows, rowCount } = await client.query(
-      `UPDATE cards SET ${setClauses.join(', ')} WHERE id = $${idx} AND user_id = $${idx + 1} AND deleted_at IS NULL RETURNING id, lane_id, title, description, position, created_at, updated_at`,
+      `UPDATE cards SET ${setClauses.join(', ')} WHERE id = $${idx} AND deleted_at IS NULL RETURNING id, lane_id, title, description, position, created_at, updated_at`,
       values
     )
     if (!rowCount) {
@@ -86,6 +87,7 @@ cardsRouter.patch('/:id', async (req: Request, res: Response): Promise<void> => 
       }
     }
     await client.query('COMMIT')
+    publishBoardChanged()
     res.json({ card: rows[0] })
   } catch (err) {
     await client.query('ROLLBACK'); throw err
@@ -95,11 +97,11 @@ cardsRouter.patch('/:id', async (req: Request, res: Response): Promise<void> => 
 })
 
 cardsRouter.delete('/:id', async (req: Request, res: Response): Promise<void> => {
-  const { userId } = req as AuthenticatedRequest
   const { rowCount } = await pool.query(
-    'UPDATE cards SET deleted_at = NOW() WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL',
-    [req.params.id, userId]
+    'UPDATE cards SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL',
+    [req.params.id]
   )
   if (!rowCount) { res.status(404).json({ error: 'Card not found' }); return }
+  publishBoardChanged()
   res.json({ ok: true })
 })

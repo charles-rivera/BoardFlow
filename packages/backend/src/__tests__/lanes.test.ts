@@ -44,14 +44,13 @@ describe('Lanes', () => {
   })
 
   describe('GET /api/lanes', () => {
-    it('returns only the authenticated user lanes with nested cards', async () => {
+    it('returns the shared lanes to every authenticated user', async () => {
       await request(app).post('/api/lanes').set('Cookie', cookie).send({ title: 'Alice Lane' })
       await request(app).post('/api/lanes').set('Cookie', cookie2).send({ title: 'Bob Lane' })
       const res = await request(app).get('/api/lanes').set('Cookie', cookie)
       expect(res.status).toBe(200)
-      expect(res.body.lanes).toHaveLength(1)
-      expect(res.body.lanes[0].title).toBe('Alice Lane')
-      expect(res.body.lanes[0].cards).toEqual([])
+      expect(res.body.lanes).toHaveLength(2)
+      expect(res.body.lanes.map((lane: { title: string }) => lane.title)).toEqual(['Alice Lane', 'Bob Lane'])
     })
   })
 
@@ -65,12 +64,13 @@ describe('Lanes', () => {
       expect(res.body.lane.title).toBe('New')
     })
 
-    it('returns 404 when trying to rename another user lane', async () => {
+    it('allows another user to rename a shared lane', async () => {
       const { body: { lane } } = await request(app)
         .post('/api/lanes').set('Cookie', cookie2).send({ title: "Bob's Lane" })
       const res = await request(app)
         .patch(`/api/lanes/${lane.id}`).set('Cookie', cookie).send({ title: 'Hijacked' })
-      expect(res.status).toBe(404)
+      expect(res.status).toBe(200)
+      expect(res.body.lane.title).toBe('Hijacked')
     })
   })
 
@@ -121,11 +121,11 @@ describe('Lanes', () => {
       expect(rows).toHaveLength(2)
     })
 
-    it('returns 404 when deleting another user lane', async () => {
+    it('allows another user to delete a shared lane', async () => {
       const { body: { lane } } = await request(app)
         .post('/api/lanes').set('Cookie', cookie2).send({ title: "Bob" })
       const res = await request(app).delete(`/api/lanes/${lane.id}`).set('Cookie', cookie)
-      expect(res.status).toBe(404)
+      expect(res.status).toBe(200)
     })
   })
 })

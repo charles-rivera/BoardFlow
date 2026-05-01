@@ -5,13 +5,16 @@ import { clearDb, createUser, loginUser } from './helpers'
 
 describe('Cards', () => {
   let cookie: string
+  let cookie2: string
   let laneId: string
   let lane2Id: string
 
   beforeEach(async () => {
     await clearDb()
     await createUser()
+    await createUser('bob@example.com')
     cookie = await loginUser()
+    cookie2 = await loginUser('bob@example.com')
     const r1 = await request(app).post('/api/lanes').set('Cookie', cookie).send({ title: 'To Do' })
     laneId = r1.body.lane.id
     const r2 = await request(app).post('/api/lanes').set('Cookie', cookie).send({ title: 'Done' })
@@ -86,6 +89,15 @@ describe('Cards', () => {
       expect(res.body.card.title).toBe('Updated')
       expect(res.body.card.lane_id).toBe(laneId)
     })
+
+    it('allows another user to edit a shared card', async () => {
+      const { body: { card } } = await request(app)
+        .post('/api/cards').set('Cookie', cookie).send({ lane_id: laneId, title: 'Shared' })
+      const res = await request(app)
+        .patch(`/api/cards/${card.id}`).set('Cookie', cookie2).send({ title: 'Edited by Bob' })
+      expect(res.status).toBe(200)
+      expect(res.body.card.title).toBe('Edited by Bob')
+    })
   })
 
   describe('DELETE /api/cards/:id', () => {
@@ -104,6 +116,13 @@ describe('Cards', () => {
       await request(app).delete(`/api/cards/${card.id}`).set('Cookie', cookie)
       const res = await request(app).delete(`/api/cards/${card.id}`).set('Cookie', cookie)
       expect(res.status).toBe(404)
+    })
+
+    it('shows shared cards to a second user', async () => {
+      await request(app).post('/api/cards').set('Cookie', cookie).send({ lane_id: laneId, title: 'Visible to all' })
+      const res = await request(app).get('/api/lanes').set('Cookie', cookie2)
+      expect(res.status).toBe(200)
+      expect(res.body.lanes[0].cards[0].title).toBe('Visible to all')
     })
   })
 })

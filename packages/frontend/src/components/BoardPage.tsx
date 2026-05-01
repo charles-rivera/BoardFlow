@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useRef, useState } from 'react'
 import { useLanes } from '../hooks/useLanes'
 import { useMoveCard } from '../hooks/useCards'
+import { useRealtimeBoard } from '../hooks/useRealtimeBoard'
 import { getCardInsertPosition, moveCardInLanes, type MoveCardInput } from '../lib/cardMove'
 import BoardHeader from './BoardHeader'
 import LaneList from './LaneList'
@@ -15,6 +16,7 @@ interface BoardPageProps { user: { id: string; email: string } }
 export default function BoardPage({ user }: BoardPageProps) {
   const qc = useQueryClient()
   const { data: lanes, isLoading } = useLanes()
+  useRealtimeBoard(Boolean(user.id))
   const moveCard = useMoveCard()
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
   const dragSnapshotRef = useRef<Lane[] | null>(null)
