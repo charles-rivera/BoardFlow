@@ -2,11 +2,27 @@ import { Router, Request, Response } from 'express'
 import { pool } from '../db'
 import { requireAuth, AuthenticatedRequest } from '../middleware/auth'
 import { publishBoardChanged } from '../realtime'
+import { getCardById } from '../board'
 
 export const cardsRouter = Router()
 cardsRouter.use(requireAuth)
 
 const RENORM_GAP = 0.001
+
+cardsRouter.get('/', async (_req: Request, res: Response): Promise<void> => {
+  const { rows: cards } = await pool.query(
+    'SELECT id, lane_id, title, description, position, created_at, updated_at FROM cards WHERE deleted_at IS NULL ORDER BY position ASC'
+  )
+  res.json({ cards })
+})
+
+cardsRouter.get('/:id', async (req: Request, res: Response): Promise<void> => {
+  const card = await getCardById(pool, req.params.id)
+  if (!card) {
+    res.status(404).json({ error: 'Card not found' }); return
+  }
+  res.json({ card })
+})
 
 cardsRouter.post('/', async (req: Request, res: Response): Promise<void> => {
   const { userId } = req as AuthenticatedRequest
@@ -51,6 +67,9 @@ cardsRouter.patch('/:id', async (req: Request, res: Response): Promise<void> => 
     }
     setClauses.push(`position = $${idx++}`); values.push(position)
   }
+  if (setClauses.length === 1) {
+    res.status(400).json({ error: 'At least one field is required' }); return
+  }
   values.push(req.params.id)
   const client = await pool.connect()
   try {
@@ -86,9 +105,10 @@ cardsRouter.patch('/:id', async (req: Request, res: Response): Promise<void> => 
         }
       }
     }
+    const card = await getCardById(client, req.params.id)
     await client.query('COMMIT')
     publishBoardChanged()
-    res.json({ card: rows[0] })
+    res.json({ card })
   } catch (err) {
     await client.query('ROLLBACK'); throw err
   } finally {

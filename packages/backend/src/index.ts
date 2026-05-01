@@ -5,6 +5,8 @@ import { authRouter } from './routes/auth'
 import { lanesRouter } from './routes/lanes'
 import { cardsRouter } from './routes/cards'
 import { eventsRouter } from './routes/events'
+import { boardRouter } from './routes/board'
+import { openApiDocument } from './openapi'
 
 export const app = express()
 
@@ -16,6 +18,10 @@ app.use(express.json())
 app.use(cookieParser())
 
 app.use('/api/auth', authRouter)
+app.get('/api/openapi.json', (_req, res) => {
+  res.json(openApiDocument)
+})
+app.use('/api/board', boardRouter)
 app.use('/api/events', eventsRouter)
 app.use('/api/lanes', lanesRouter)
 app.use('/api/cards', cardsRouter)

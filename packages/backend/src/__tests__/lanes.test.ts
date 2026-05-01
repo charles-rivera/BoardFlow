@@ -54,6 +54,34 @@ describe('Lanes', () => {
     })
   })
 
+  describe('GET /api/lanes/:id', () => {
+    it('returns a single lane with its cards', async () => {
+      const { body: { lane } } = await request(app)
+        .post('/api/lanes').set('Cookie', cookie).send({ title: 'Details' })
+      await request(app).post('/api/cards').set('Cookie', cookie).send({ lane_id: lane.id, title: 'Card 1' })
+
+      const res = await request(app).get(`/api/lanes/${lane.id}`).set('Cookie', cookie2)
+
+      expect(res.status).toBe(200)
+      expect(res.body.lane.id).toBe(lane.id)
+      expect(res.body.lane.cards).toHaveLength(1)
+    })
+  })
+
+  describe('GET /api/board', () => {
+    it('returns the full board as JSON', async () => {
+      const { body: { lane } } = await request(app)
+        .post('/api/lanes').set('Cookie', cookie).send({ title: 'Board Lane' })
+      await request(app).post('/api/cards').set('Cookie', cookie).send({ lane_id: lane.id, title: 'Board Card' })
+
+      const res = await request(app).get('/api/board').set('Cookie', cookie2)
+
+      expect(res.status).toBe(200)
+      expect(res.body.lanes).toHaveLength(1)
+      expect(res.body.lanes[0].cards[0].title).toBe('Board Card')
+    })
+  })
+
   describe('PATCH /api/lanes/:id', () => {
     it('renames a lane', async () => {
       const { body: { lane } } = await request(app)
@@ -62,6 +90,31 @@ describe('Lanes', () => {
         .patch(`/api/lanes/${lane.id}`).set('Cookie', cookie).send({ title: 'New' })
       expect(res.status).toBe(200)
       expect(res.body.lane.title).toBe('New')
+    })
+
+    it('updates the lane position from the main REST endpoint', async () => {
+      const { body: { lane } } = await request(app)
+        .post('/api/lanes').set('Cookie', cookie).send({ title: 'Sortable' })
+
+      const res = await request(app)
+        .patch(`/api/lanes/${lane.id}`).set('Cookie', cookie).send({ position: 1.5 })
+
+      expect(res.status).toBe(200)
+      expect(res.body.lane.position).toBe(1.5)
+    })
+
+    it('renormalizes positions when gap falls below 0.001', async () => {
+      const { body: { lane: l1 } } = await request(app)
+        .post('/api/lanes').set('Cookie', cookie).send({ title: 'A' })
+      await request(app).post('/api/lanes').set('Cookie', cookie).send({ title: 'B' })
+
+      await request(app)
+        .patch(`/api/lanes/${l1.id}`).set('Cookie', cookie).send({ position: 2.0000001 })
+
+      const { body: { lanes } } = await request(app).get('/api/lanes').set('Cookie', cookie)
+      for (let i = 1; i < lanes.length; i++) {
+        expect(lanes[i].position - lanes[i - 1].position).toBeGreaterThanOrEqual(0.001)
+      }
     })
 
     it('allows another user to rename a shared lane', async () => {
@@ -74,26 +127,15 @@ describe('Lanes', () => {
     })
   })
 
-  describe('PATCH /api/lanes/:id/reorder', () => {
-    it('updates lane position', async () => {
-      const { body: { lane } } = await request(app)
-        .post('/api/lanes').set('Cookie', cookie).send({ title: 'Lane' })
-      const res = await request(app)
-        .patch(`/api/lanes/${lane.id}/reorder`).set('Cookie', cookie).send({ position: 1.5 })
-      expect(res.status).toBe(200)
-      expect(res.body.ok).toBe(true)
-    })
+  describe('GET /api/openapi.json', () => {
+    it('serves an OpenAPI document describing the board API', async () => {
+      const res = await request(app).get('/api/openapi.json')
 
-    it('renormalizes positions when gap falls below 0.001', async () => {
-      const { body: { lane: l1 } } = await request(app)
-        .post('/api/lanes').set('Cookie', cookie).send({ title: 'A' })
-      await request(app).post('/api/lanes').set('Cookie', cookie).send({ title: 'B' })
-      await request(app)
-        .patch(`/api/lanes/${l1.id}/reorder`).set('Cookie', cookie).send({ position: 2.0000001 })
-      const { body: { lanes } } = await request(app).get('/api/lanes').set('Cookie', cookie)
-      for (let i = 1; i < lanes.length; i++) {
-        expect(lanes[i].position - lanes[i - 1].position).toBeGreaterThanOrEqual(0.001)
-      }
+      expect(res.status).toBe(200)
+      expect(res.body.openapi).toBe('3.1.0')
+      expect(res.body.paths['/board'].get.summary).toBe('Get the full board as JSON')
+      expect(res.body.paths['/cards/{id}'].get).toBeTruthy()
+      expect(res.body.paths['/lanes/{id}'].patch).toBeTruthy()
     })
   })
 

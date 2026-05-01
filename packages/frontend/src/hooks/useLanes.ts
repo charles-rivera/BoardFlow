@@ -19,7 +19,7 @@ export function useCreateLane() {
 export function useRenameLane() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, title }: { id: string; title: string }) => api.lanes.rename(id, title),
+    mutationFn: ({ id, title }: { id: string; title: string }) => api.lanes.update(id, { title }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['lanes'] }),
   })
 }
@@ -36,7 +36,7 @@ export function useReorderLane() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ id, position }: { id: string; position: number }) =>
-      api.lanes.reorder(id, position),
+      api.lanes.update(id, { position }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['lanes'] }),
   })
 }

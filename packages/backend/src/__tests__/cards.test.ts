@@ -55,6 +55,31 @@ describe('Cards', () => {
     })
   })
 
+  describe('GET /api/cards', () => {
+    it('lists all cards in the board', async () => {
+      await request(app).post('/api/cards').set('Cookie', cookie).send({ lane_id: laneId, title: 'Card 1' })
+      await request(app).post('/api/cards').set('Cookie', cookie).send({ lane_id: lane2Id, title: 'Card 2' })
+
+      const res = await request(app).get('/api/cards').set('Cookie', cookie2)
+
+      expect(res.status).toBe(200)
+      expect(res.body.cards).toHaveLength(2)
+    })
+  })
+
+  describe('GET /api/cards/:id', () => {
+    it('returns a single card', async () => {
+      const { body: { card } } = await request(app)
+        .post('/api/cards').set('Cookie', cookie).send({ lane_id: laneId, title: 'Lookup' })
+
+      const res = await request(app).get(`/api/cards/${card.id}`).set('Cookie', cookie2)
+
+      expect(res.status).toBe(200)
+      expect(res.body.card.id).toBe(card.id)
+      expect(res.body.card.title).toBe('Lookup')
+    })
+  })
+
   describe('PATCH /api/cards/:id', () => {
     it('moves a card to a different lane', async () => {
       const { body: { card } } = await request(app)
@@ -97,6 +122,16 @@ describe('Cards', () => {
         .patch(`/api/cards/${card.id}`).set('Cookie', cookie2).send({ title: 'Edited by Bob' })
       expect(res.status).toBe(200)
       expect(res.body.card.title).toBe('Edited by Bob')
+    })
+
+    it('returns 400 when no updatable fields are provided', async () => {
+      const { body: { card } } = await request(app)
+        .post('/api/cards').set('Cookie', cookie).send({ lane_id: laneId, title: 'Shared' })
+
+      const res = await request(app)
+        .patch(`/api/cards/${card.id}`).set('Cookie', cookie).send({})
+
+      expect(res.status).toBe(400)
     })
   })
 

@@ -34,8 +34,8 @@ export const api = {
       apiFetch<{ lane: Lane }>('/api/lanes', { method: 'POST', body: JSON.stringify({ title }) }),
     rename: (id: string, title: string) =>
       apiFetch<{ lane: Lane }>(`/api/lanes/${id}`, { method: 'PATCH', body: JSON.stringify({ title }) }),
-    reorder: (id: string, position: number) =>
-      apiFetch<{ ok: boolean }>(`/api/lanes/${id}/reorder`, { method: 'PATCH', body: JSON.stringify({ position }) }),
+    update: (id: string, data: Partial<{ title: string; position: number }>) =>
+      apiFetch<{ lane: Lane }>(`/api/lanes/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
     delete: (id: string) =>
       apiFetch<{ ok: boolean }>(`/api/lanes/${id}`, { method: 'DELETE' }),
   },

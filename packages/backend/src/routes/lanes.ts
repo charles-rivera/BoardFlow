@@ -2,26 +2,92 @@ import { Router, Request, Response } from 'express'
 import { pool } from '../db'
 import { requireAuth, AuthenticatedRequest } from '../middleware/auth'
 import { publishBoardChanged } from '../realtime'
+import { getBoard, getLaneById } from '../board'
 
 export const lanesRouter = Router()
 lanesRouter.use(requireAuth)
 
 const RENORM_GAP = 0.001
 
-lanesRouter.get('/', async (req: Request, res: Response): Promise<void> => {
-  const { rows: lanes } = await pool.query(
-    'SELECT id, title, position, created_at FROM lanes WHERE deleted_at IS NULL ORDER BY position ASC'
-  )
-  const { rows: cards } = await pool.query(
-    'SELECT id, lane_id, title, description, position, created_at, updated_at FROM cards WHERE deleted_at IS NULL ORDER BY position ASC'
-  )
-  const cardsByLane = new Map<string, typeof cards>()
-  for (const c of cards) {
-    const list = cardsByLane.get(c.lane_id) ?? []
-    list.push(c)
-    cardsByLane.set(c.lane_id, list)
+type UpdateLaneResult =
+  | { lane: NonNullable<Awaited<ReturnType<typeof getLaneById>>> }
+  | { error: { status: number; body: { error: string } } }
+
+function hasError(result: UpdateLaneResult): result is Extract<UpdateLaneResult, { error: { status: number; body: { error: string } } }> {
+  return 'error' in result
+}
+
+async function updateLaneById(id: string, body: { title?: unknown; position?: unknown }): Promise<UpdateLaneResult> {
+  const { title, position } = body
+  if (title === undefined && position === undefined) {
+    return { error: { status: 400, body: { error: 'At least one of title or position is required' } } }
   }
-  res.json({ lanes: lanes.map(l => ({ ...l, cards: cardsByLane.get(l.id) ?? [] })) })
+  if (title !== undefined && (typeof title !== 'string' || !title.trim())) {
+    return { error: { status: 400, body: { error: 'Title cannot be empty' } } }
+  }
+  if (position !== undefined && (typeof position !== 'number' || !isFinite(position))) {
+    return { error: { status: 400, body: { error: 'position must be a finite number' } } }
+  }
+
+  const client = await pool.connect()
+  try {
+    await client.query('BEGIN')
+    const setClauses = ['created_at = created_at']
+    const values: unknown[] = []
+    let idx = 1
+    if (title !== undefined) {
+      setClauses.push(`title = $${idx++}`)
+      values.push(title.trim())
+    }
+    if (position !== undefined) {
+      setClauses.push(`position = $${idx++}`)
+      values.push(position)
+    }
+    values.push(id)
+    const { rowCount } = await client.query(
+      `UPDATE lanes SET ${setClauses.join(', ')} WHERE id = $${idx} AND deleted_at IS NULL`,
+      values
+    )
+    if (!rowCount) {
+      await client.query('ROLLBACK')
+      return { error: { status: 404, body: { error: 'Lane not found' } } }
+    }
+    if (position !== undefined) {
+      const { rows: all } = await client.query<{ id: string; position: number }>(
+        'SELECT id, position FROM lanes WHERE deleted_at IS NULL ORDER BY position ASC'
+      )
+      const needsRenorm = all.some((r, i) => i > 0 && r.position - all[i - 1].position < RENORM_GAP)
+      if (needsRenorm) {
+        for (let i = 0; i < all.length; i++) {
+          await client.query('UPDATE lanes SET position = $1 WHERE id = $2', [i + 1, all[i].id])
+        }
+      }
+    }
+    const lane = await getLaneById(client, id)
+    if (!lane) {
+      await client.query('ROLLBACK')
+      return { error: { status: 404, body: { error: 'Lane not found' } } }
+    }
+    await client.query('COMMIT')
+    publishBoardChanged()
+    return { lane }
+  } catch (err) {
+    await client.query('ROLLBACK'); throw err
+  } finally {
+    client.release()
+  }
+}
+
+lanesRouter.get('/', async (req: Request, res: Response): Promise<void> => {
+  res.json(await getBoard(pool))
+})
+
+lanesRouter.get('/:id', async (req: Request, res: Response): Promise<void> => {
+  const lane = await getLaneById(pool, req.params.id)
+  if (!lane) {
+    res.status(404).json({ error: 'Lane not found' }); return
+  }
+  res.json({ lane })
 })
 
 lanesRouter.post('/', async (req: Request, res: Response): Promise<void> => {
@@ -42,52 +108,11 @@ lanesRouter.post('/', async (req: Request, res: Response): Promise<void> => {
 })
 
 lanesRouter.patch('/:id', async (req: Request, res: Response): Promise<void> => {
-  const { title } = req.body
-  if (!title || typeof title !== 'string' || !title.trim()) {
-    res.status(400).json({ error: 'Title is required' }); return
+  const result: UpdateLaneResult = await updateLaneById(req.params.id, req.body)
+  if (hasError(result)) {
+    res.status(result.error.status).json(result.error.body); return
   }
-  const { rows, rowCount } = await pool.query(
-    'UPDATE lanes SET title = $1 WHERE id = $2 AND deleted_at IS NULL RETURNING id, title, position, created_at',
-    [title.trim(), req.params.id]
-  )
-  if (!rowCount) { res.status(404).json({ error: 'Lane not found' }); return }
-  publishBoardChanged()
-  res.json({ lane: rows[0] })
-})
-
-lanesRouter.patch('/:id/reorder', async (req: Request, res: Response): Promise<void> => {
-  const { position } = req.body
-  if (typeof position !== 'number' || !isFinite(position)) {
-    res.status(400).json({ error: 'position must be a finite number' }); return
-  }
-  const client = await pool.connect()
-  try {
-    await client.query('BEGIN')
-    const { rowCount } = await client.query(
-      'UPDATE lanes SET position = $1 WHERE id = $2 AND deleted_at IS NULL',
-      [position, req.params.id]
-    )
-    if (!rowCount) {
-      await client.query('ROLLBACK')
-      res.status(404).json({ error: 'Lane not found' }); return
-    }
-    const { rows: all } = await client.query<{ id: string; position: number }>(
-      'SELECT id, position FROM lanes WHERE deleted_at IS NULL ORDER BY position ASC'
-    )
-    const needsRenorm = all.some((r, i) => i > 0 && r.position - all[i - 1].position < RENORM_GAP)
-    if (needsRenorm) {
-      for (let i = 0; i < all.length; i++) {
-        await client.query('UPDATE lanes SET position = $1 WHERE id = $2', [i + 1, all[i].id])
-      }
-    }
-    await client.query('COMMIT')
-    publishBoardChanged()
-    res.json({ ok: true })
-  } catch (err) {
-    await client.query('ROLLBACK'); throw err
-  } finally {
-    client.release()
-  }
+  res.json({ lane: result.lane })
 })
 
 lanesRouter.delete('/:id', async (req: Request, res: Response): Promise<void> => {
