@@ -59,7 +59,7 @@ export default function BoardPage({ user }: BoardPageProps) {
     const insertAfter = hoverY > overMidpoint
     const targetCards = targetLane.cards.filter((card) => card.id !== cardId)
 
-    let targetIndex = targetCards.length
+    let targetIndex = insertAfter ? targetCards.length : 0
     if (overData.type === 'card' && overData.cardId) {
       const overIndex = targetCards.findIndex((card) => card.id === overData.cardId)
       if (overIndex !== -1) {

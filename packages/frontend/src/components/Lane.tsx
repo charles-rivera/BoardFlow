@@ -19,6 +19,7 @@ export default function Lane({ lane }: LaneProps) {
 
   return (
     <div
+      ref={setNodeRef}
       className={`flex w-[var(--lane-width)] shrink-0 flex-col rounded-2xl border bg-[var(--color-lane-bg)] p-[var(--lane-padding)] shadow-sm transition-colors ${
         isOver ? 'border-[var(--color-accent)] bg-[var(--color-accent-soft)]' : 'border-[var(--color-border)]'
       }`}
@@ -28,7 +29,7 @@ export default function Lane({ lane }: LaneProps) {
         onRename={(title) => renameLane.mutate({ id: lane.id, title })}
         onDelete={() => deleteLane.mutate(lane.id)}
       />
-      <div ref={setNodeRef} className="flex-1 flex flex-col gap-2">
+      <div className="flex-1 flex flex-col gap-2">
         <CardList cards={lane.cards} />
       </div>
       <AddCardButton onAdd={(title) => createCard.mutate({ laneId: lane.id, title })} />
