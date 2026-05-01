@@ -80,4 +80,38 @@ describe('useMoveCard', () => {
     expect(rolledBack?.find(l => l.id === 'lane-1')?.cards).toHaveLength(1)
     expect(rolledBack?.find(l => l.id === 'lane-2')?.cards).toHaveLength(0)
   })
+
+  it('reorders cards within the same lane using the optimistic target index', async () => {
+    qc.setQueryData<Lane[]>(['lanes'], [
+      {
+        ...mockLanes[0],
+        cards: [
+          mockLanes[0].cards[0],
+          {
+            id: 'card-2', lane_id: 'lane-1', user_id: 'u1', title: 'Task B',
+            description: '', position: 2,
+            created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z',
+          },
+        ],
+      },
+      mockLanes[1],
+    ])
+
+    vi.mocked(api.cards.update).mockResolvedValue({ card: mockLanes[0].cards[0] })
+
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={qc}>{children}</QueryClientProvider>
+    )
+    const { useMoveCard } = await import('../hooks/useCards')
+    const { result } = renderHook(() => useMoveCard(), { wrapper })
+
+    act(() => {
+      result.current.mutate({ id: 'card-2', laneId: 'lane-1', position: 0, targetIndex: 0 })
+    })
+
+    await waitFor(() => {
+      const laneCards = qc.getQueryData<Lane[]>(['lanes'])?.find((lane) => lane.id === 'lane-1')?.cards ?? []
+      expect(laneCards.map((card) => card.id)).toEqual(['card-2', 'card-1'])
+    })
+  })
 })

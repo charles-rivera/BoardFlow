@@ -12,10 +12,17 @@ export default function Lane({ lane }: LaneProps) {
   const renameLane = useRenameLane()
   const deleteLane = useDeleteLane()
   const createCard = useCreateCard()
-  const { setNodeRef, isOver } = useDroppable({ id: lane.id })
+  const { setNodeRef, isOver } = useDroppable({
+    id: lane.id,
+    data: { type: 'lane', laneId: lane.id },
+  })
 
   return (
-    <div className={`flex flex-col bg-gray-100 rounded-xl w-64 shrink-0 p-3 transition-colors ${isOver ? 'bg-blue-50' : ''}`}>
+    <div
+      className={`flex flex-col w-64 shrink-0 rounded-xl border bg-gray-50 p-3 shadow-sm transition-colors ${
+        isOver ? 'border-blue-300 bg-blue-50' : 'border-gray-200'
+      }`}
+    >
       <LaneHeader
         lane={lane}
         onRename={(title) => renameLane.mutate({ id: lane.id, title })}

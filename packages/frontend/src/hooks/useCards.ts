@@ -2,26 +2,20 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import type { Lane } from '@kanban/shared'
 import { api } from '../api/client'
+import { moveCardInLanes } from '../lib/cardMove'
 
 export function useMoveCard() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, laneId, position }: { id: string; laneId: string; position: number }) =>
+    mutationFn: ({ id, laneId, position }: { id: string; laneId: string; position: number; targetIndex?: number; skipOptimistic?: boolean }) =>
       api.cards.update(id, { lane_id: laneId, position }),
-    onMutate: async ({ id, laneId, position }) => {
+    onMutate: async ({ id, laneId, position, targetIndex, skipOptimistic }) => {
       await qc.cancelQueries({ queryKey: ['lanes'] })
       const previousLanes = qc.getQueryData<Lane[]>(['lanes'])
+      if (skipOptimistic) return { previousLanes }
       qc.setQueryData<Lane[]>(['lanes'], (old) => {
         if (!old) return old
-        const card = old.flatMap(l => l.cards).find(c => c.id === id)
-        if (!card) return old
-        return old.map(lane => ({
-          ...lane,
-          cards: lane.id === laneId
-            ? [...lane.cards.filter(c => c.id !== id), { ...card, lane_id: laneId, position }]
-                .sort((a, b) => a.position - b.position)
-            : lane.cards.filter(c => c.id !== id),
-        }))
+        return moveCardInLanes(old, { id, laneId, position, targetIndex })
       })
       return { previousLanes }
     },
