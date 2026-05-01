@@ -107,8 +107,8 @@ lanesRouter.delete('/:id', async (req: Request, res: Response): Promise<void> =>
       res.status(404).json({ error: 'Lane not found' }); return
     }
     await client.query(
-      'UPDATE cards SET deleted_at = NOW() WHERE lane_id = $1 AND deleted_at IS NULL',
-      [req.params.id]
+      'UPDATE cards SET deleted_at = NOW() WHERE lane_id = $1 AND user_id = $2 AND deleted_at IS NULL',
+      [req.params.id, userId]
     )
     await client.query('COMMIT')
     res.json({ ok: true })

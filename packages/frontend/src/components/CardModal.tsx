@@ -16,6 +16,7 @@ export default function CardModal({ card, open, onClose }: CardModalProps) {
   if (!open) return null
 
   const save = () => {
+    if (!title.trim()) return
     if (title.trim() !== card.title || description !== card.description) {
       updateCard.mutate({ id: card.id, title: title.trim(), description })
     }
