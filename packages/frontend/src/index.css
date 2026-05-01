@@ -17,6 +17,7 @@
   --color-text: #0f172a;
   --color-text-muted: #334155;
   --color-text-subtle: #64748b;
+  --color-placeholder: #8b97a8;
   --color-accent: #ea580c;
   --color-accent-soft: rgba(234, 88, 12, 0.14);
 }
@@ -36,6 +37,7 @@ html[data-theme='dark'] {
   --color-text: #eceff3;
   --color-text-muted: #d4d9e0;
   --color-text-subtle: #a3acb8;
+  --color-placeholder: #7f8894;
   --color-accent: #fb923c;
   --color-accent-soft: rgba(251, 146, 60, 0.2);
 }
@@ -80,6 +82,17 @@ body {
   color: var(--color-text);
 }
 
+.toastui-editor-ww-container .ProseMirror,
+.toastui-editor-ww-container .ProseMirror p,
+.toastui-editor-ww-container .ProseMirror li,
+.toastui-editor-ww-container .ProseMirror div,
+.toastui-editor-md-container .toastui-editor-contents,
+.toastui-editor-md-container .toastui-editor-contents p,
+.toastui-editor-md-container .toastui-editor-contents li,
+.toastui-editor-md-container .toastui-editor-contents div {
+  color: var(--color-text) !important;
+}
+
 .toastui-editor-defaultUI .toastui-editor-toolbar-icons {
   filter: none;
 }
@@ -90,6 +103,17 @@ html[data-theme='dark'] .toastui-editor-defaultUI .toastui-editor-toolbar-icons 
 
 .toastui-editor-defaultUI-toolbar button {
   color: var(--color-text-muted);
+}
+
+.toastui-editor-contents p.is-empty::before,
+.toastui-editor-contents .placeholder {
+  color: var(--color-placeholder) !important;
+  opacity: 1;
+}
+
+.toastui-editor-ww-container .ProseMirror ::selection,
+.toastui-editor-md-container .toastui-editor-contents ::selection {
+  background: var(--color-accent-soft);
 }
 
 .toastui-editor-md-tab-container,

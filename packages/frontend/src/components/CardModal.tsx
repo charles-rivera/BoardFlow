@@ -14,6 +14,21 @@ export default function CardModal({ card, open, onClose }: CardModalProps) {
 
   useEffect(() => { setTitle(card.title); setDescription(card.description) }, [card.id])
 
+  useEffect(() => {
+    if (!open) return undefined
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose()
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [open, onClose])
+
   if (!open) return null
 
   const save = () => {
@@ -44,7 +59,7 @@ export default function CardModal({ card, open, onClose }: CardModalProps) {
           <input
             value={title}
             onChange={e => setTitle(e.target.value)}
-            className="w-full rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 py-2 text-[var(--color-text)] focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="w-full rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 py-2 text-[var(--color-text)] transition-[border-color,box-shadow] focus:border-[var(--color-accent)] focus:outline-none focus:shadow-[0_0_0_3px_var(--color-accent-soft)]"
           />
         </div>
         <div className="flex-1 overflow-y-auto">
@@ -54,7 +69,7 @@ export default function CardModal({ card, open, onClose }: CardModalProps) {
         <div className="flex gap-2">
           <button
             onClick={save}
-            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-medium"
+            className="flex-1 rounded-lg bg-[var(--color-accent)] py-2 font-medium text-white transition-opacity hover:opacity-90"
           >
             Save
           </button>

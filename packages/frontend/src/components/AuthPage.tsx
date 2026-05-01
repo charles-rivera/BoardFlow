@@ -38,7 +38,7 @@ export default function AuthPage() {
               type="email"
               value={email}
               onChange={e => setEmail(e.target.value)}
-              className="w-full rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 py-2 text-[var(--color-text)] focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 py-2 text-[var(--color-text)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
             />
             {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
           </div>
@@ -48,7 +48,7 @@ export default function AuthPage() {
               type="password"
               value={password}
               onChange={e => setPassword(e.target.value)}
-              className="w-full rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 py-2 text-[var(--color-text)] focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 py-2 text-[var(--color-text)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
             />
             {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
           </div>
@@ -58,14 +58,14 @@ export default function AuthPage() {
           <button
             type="submit"
             disabled={mutation.isPending}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-medium disabled:opacity-50"
+            className="w-full rounded-lg bg-[var(--color-accent)] py-2 font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
           >
             {mode === 'login' ? 'Sign In' : 'Create Account'}
           </button>
         </form>
         <button
           type="button"
-          className="mt-4 text-sm text-blue-600 hover:underline"
+          className="mt-4 text-sm text-[var(--color-accent)] hover:underline"
           onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setErrors({}) }}
         >
           {mode === 'login' ? "Don't have an account? Register" : 'Already have an account? Sign in'}

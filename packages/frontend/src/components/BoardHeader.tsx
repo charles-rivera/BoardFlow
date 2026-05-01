@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Settings2, Zap } from 'lucide-react'
+import { LogOut, Settings2, Zap } from 'lucide-react'
 import { useLogout } from '../hooks/useAuth'
 import { useUiSettings, type AnimationSpeed, type BoardDensity, type CardSize, type ThemeMode } from '../context/UiSettingsContext'
 import { cn } from '../lib/utils'
@@ -74,9 +74,6 @@ export default function BoardHeader({ user }: BoardHeaderProps) {
   return (
     <header className="relative flex shrink-0 items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-header-bg)] px-6 py-3 shadow-sm transition-colors duration-300">
       <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[var(--color-accent-soft)] text-[var(--color-accent)]">
-          <Zap size={18} />
-        </div>
         <div>
           <h1 className="text-xl font-bold text-[var(--color-text)]">Kanban</h1>
           <p className="text-sm text-[var(--color-text-subtle)]">Tune the board to match how you like to work.</p>
@@ -152,8 +149,9 @@ export default function BoardHeader({ user }: BoardHeaderProps) {
         </div>
         <button
           onClick={() => logout.mutate()}
-          className="rounded-xl border border-[var(--color-border)] px-3 py-2 text-sm text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text)]"
+          className="inline-flex items-center gap-2 rounded-xl border border-[var(--color-border)] px-3 py-2 text-sm text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text)]"
         >
+          <LogOut size={16} />
           Logout
         </button>
       </div>

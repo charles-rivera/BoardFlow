@@ -32,7 +32,7 @@ export default function AddLaneButton() {
         className="mb-2 w-full rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-2 py-2 text-sm text-[var(--color-text)]"
       />
       <div className="flex gap-1">
-        <button onClick={submit} className="flex-1 rounded-lg bg-blue-600 py-2 text-sm text-white">Add</button>
+        <button onClick={submit} className="flex-1 rounded-lg bg-[var(--color-accent)] py-2 text-sm text-white transition-opacity hover:opacity-90">Add</button>
         <button onClick={() => { setAdding(false); setTitle('') }} className="px-2 text-sm text-[var(--color-text-subtle)]">✕</button>
       </div>
     </div>

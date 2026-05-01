@@ -33,7 +33,7 @@ export default function LaneHeader({ lane, onRename, onDelete }: LaneHeaderProps
           onChange={e => setValue(e.target.value)}
           onBlur={save}
           onKeyDown={e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') cancel() }}
-          className="flex-1 rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-2 py-1 text-[length:var(--lane-title-size)] font-semibold text-[var(--color-text)] focus:outline-none focus:ring-2 focus:ring-blue-400"
+          className="flex-1 rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-2 py-1 text-[length:var(--lane-title-size)] font-semibold text-[var(--color-text)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
         />
       ) : (
         <button
