@@ -8,7 +8,7 @@ A fullstack Kanban board with real-time collaboration, rich text cards, and end-
 
 ```bash
 git clone git@github.com:charles-rivera/BoardFlow.git
-cd cocompetence
+cd BoardFlow
 docker compose up
 ```
 
